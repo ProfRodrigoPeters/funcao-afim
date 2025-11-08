@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador 3D: Função Afim</title>
+    
+    <!-- 1. Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Carrega os estilos locais -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- 3. Configura o "importmap" para carregar o three.js -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+</head>
+<body class="bg-gray-900 text-gray-800">
+
+    <!-- O container do canvas 3D (ficará no fundo) -->
+    <div id="canvas-container"></div>
+
+    <!-- O painel de Interface (UI) -->
+    <div id="ui-panel">
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">Função Afim: f(x) = ax + b</h1>
+        
+        <div class="space-y-5">
+            <!-- Botões de Exemplo -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button id="example-1-btn" class="flex-1 px-3 py-2 bg-purple-500 text-white rounded-md shadow-sm hover:bg-purple-600 transition-colors text-sm font-medium">
+                    f(x) = 2x + 1
+                </button>
+                <button id="example-2-btn" class="flex-1 px-3 py-2 bg-purple-500 text-white rounded-md shadow-sm hover:bg-purple-600 transition-colors text-sm font-medium">
+                    f(x) = -2x - 1
+                </button>
+                <button id="reset-btn" class="flex-1 px-3 py-2 bg-gray-300 text-gray-800 rounded-md shadow-sm hover:bg-gray-400 transition-colors text-sm font-medium">
+                    Reset (f(x) = 0)
+                </button>
+            </div>
+
+            <!-- Slider para o Coeficiente Angular 'a' -->
+            <div>
+                <label for="slider-a" class="flex justify-between items-center text-sm font-medium text-gray-700">
+                    <span>Coeficiente Angular (a)</span>
+                    <span id="a-value" class="font-bold text-sky-600 text-base">2.0</span>
+                </label>
+                <input type="range" id="slider-a" min="-5" max="5" step="0.1" value="2" class="mt-1">
+            </div>
+
+            <!-- Slider para o Coeficiente Linear 'b' -->
+            <div>
+                <label for="slider-b" class="flex justify-between items-center text-sm font-medium text-gray-700">
+                    <span>Coeficiente Linear (b)</span>
+                    <span id="b-value" class="font-bold text-sky-600 text-base">-1.0</span>
+                </label>
+                <input type="range" id="slider-b" min="-5" max="5" step="0.1" value="-1" class="mt-1">
+            </div>
+
+            <!-- Área de informações dinâmicas -->
+            <div class="bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-200">
+                <p class="text-sm font-medium">
+                    Função: <span id="function-equation" class="font-mono font-bold text-gray-700">f(x) = 2.0x - 1.0</span>
+                </p>
+                <p class="text-sm font-medium">
+                    Tipo: <span id="function-type" class="font-bold text-green-600">Crescente</span>
+                </p>
+                <p class="text-sm font-medium">
+                    Zero da Função (Raiz): <span id="function-root" class="font-mono font-bold text-red-600">x = 0.50</span>
+                </p>
+                <p class="text-sm font-medium">
+                    Intercepto Y (Ponto 0, b): <span id="y-intercept" class="font-mono font-bold text-blue-600">(0, -1.0)</span>
+                </p>
+            </div>
+
+            <!-- Seção: Calcular Ponto Específico -->
+            <div class="space-y-3 pt-3">
+                <label for="x-input" class="text-sm font-medium text-gray-700">Calcular f(x) para um X específico:</label>
+                <div class="flex">
+                    <input type="number" id="x-input" placeholder="Digite x..." value="1" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 text-sm">
+                    <button id="calculate-point-btn" class="ml-2 px-4 py-2 bg-sky-500 text-white rounded-md shadow-sm hover:bg-sky-600 transition-colors text-sm font-medium">
+                        Calcular
+                    </button>
+                </div>
+                <p id="point-result" class="text-sm font-medium text-center text-purple-600 h-5">f(x) = ?</p>
+            </div>
+
+            <!-- Seção: Tabela de Pontos -->
+            <div class="space-y-2">
+                 <label class="text-sm font-medium text-gray-700">Pontos Calculados:</label>
+                <div class="h-24 overflow-y-auto border border-gray-200 rounded-lg bg-white">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-3 py-2">x</th>
+                                <th scope="col" class="px-3 py-2">y = f(x)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="points-table-body">
+                            <!-- Linhas serão adicionadas via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- BOTÃO: Visualizar pontos na malha -->
+                <button id="visualize-points-btn" class="mt-2 w-full px-4 py-2 bg-green-500 text-white rounded-md shadow-sm hover:bg-green-600 transition-colors text-sm font-medium">
+                    Visualizar Pontos na Malha
+                </button>
+            </div>
+
+            <p class="text-xs text-center text-gray-500 pt-2">
+                Clique e arraste na tela para girar a visualização 3D.
+            </p>
+        </div>
+    </div>
+
+    <!-- 4. O script JavaScript (lógica do three.js) -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
